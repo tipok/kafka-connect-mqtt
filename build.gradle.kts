@@ -5,12 +5,31 @@ plugins {
     kotlin("jvm") version "1.4.10"
     id("com.github.johnrengelman.shadow") version "6.1.0"
     id("com.palantir.git-version") version "0.5.2"
+    `maven-publish`
 }
 
 ext {
     set("kafka_version", "2.7.0")
     set("paho_version", "1.2.5")
     set("klaxon_version", "5.0.1")
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/tipok/kafka-connect-mqtt")
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("TOKEN")
+            }
+        }
+    }
+    publications {
+        register("gpr", MavenPublication::class) {
+            from(components["java"])
+        }
+    }
 }
 
 allprojects {

@@ -34,7 +34,7 @@ publishing {
 
 allprojects {
     group = "pro.tipok.kafka.connect.mqtt"
-    version = "1.0.0-SNAPSHOT"
+    version = "1.0.1-SNAPSHOT"
 
     repositories {
         jcenter()
@@ -47,6 +47,9 @@ allprojects {
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
+        implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.21")
         testImplementation(platform("org.junit:junit-bom:5.7.0"))
         testImplementation("org.junit.jupiter:junit-jupiter")
         testImplementation("io.mockk:mockk:1.10.4")

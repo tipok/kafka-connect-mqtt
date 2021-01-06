@@ -50,7 +50,10 @@ class MessageListener(
             payload
         )
 
-        val jsonMessage = k.toJsonString(incomingMessage)
+        val jsonMessage: String = try { k.toJsonString(incomingMessage) } catch (e: Exception) {
+            logger.error("Could not serialize MqttMessage: {}", e, incomingMessage)
+            null
+        } ?: return
 
         logger.trace("Handling incoming message on topic {}: {}", incomingTopic, jsonMessage)
 

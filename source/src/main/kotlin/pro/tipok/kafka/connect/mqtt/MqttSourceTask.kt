@@ -56,8 +56,14 @@ class MqttSourceTask(
         this.qos = props?.get(Configuration.MQTT_MQTT_QOS_CONFIG)?.toInt() ?: 0
         this.topics = props?.get(Configuration.MQTT_MQTT_TOPICS_CONFIG)?.split(",")
             ?.map { topic -> topic.trim() }?.filter { topic -> topic.isNotBlank() } ?: listOf("#")
-        val username = props?.get(Configuration.MQTT_USERNAME_CONFIG) ?: ""
-        val password = props?.get(Configuration.MQTT_PASSWORD_CONFIG) ?: ""
+        var username = props?.get(Configuration.MQTT_USERNAME_CONFIG) ?: ""
+        if (username.isBlank()) {
+            username = ""
+        }
+        var password = props?.get(Configuration.MQTT_PASSWORD_CONFIG) ?: ""
+        if (password.isBlank()) {
+            password = ""
+        }
         this.kafkaTopic = props?.get(Configuration.MQTT_KAFKA_TOPIC_CONFIG) ?: "mqtt"
 
         val connOpts = MqttConnectOptions()

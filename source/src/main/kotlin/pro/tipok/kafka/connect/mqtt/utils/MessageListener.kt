@@ -1,12 +1,13 @@
 package pro.tipok.kafka.connect.mqtt.utils
 
 import com.beust.klaxon.Klaxon
-import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.SourceRecord
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.MqttCallback
 import org.slf4j.Logger
 import pro.tipok.kafka.connect.mqtt.utils.Utils.logger
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.*
 import org.eclipse.paho.client.mqttv3.MqttMessage as MqttMes
 
@@ -41,8 +42,11 @@ class MessageListener(
 
         val payload = this.base64Encoder.encodeToString(message.payload)
 
+        val now = ZonedDateTime.now(ZoneOffset.UTC)
+
         val incomingMessage = MqttMessage(
             incomingTopic,
+            now,
             message.id,
             message.isRetained,
             message.isDuplicate,
@@ -55,15 +59,15 @@ class MessageListener(
             null
         } ?: return
 
-        logger.trace("Handling incoming message on topic {}: {}", incomingTopic, jsonMessage)
+        logger.info("Handling incoming message on topic {}: {}", incomingTopic, jsonMessage)
 
         val record = SourceRecord(
             null,
             null,
             this.kafkaTopic,
             null,
-            Schema.STRING_SCHEMA,
-            jsonMessage
+            SCHEMA,
+            incomingMessage.toStruct()
         )
         this.queue.put(record)
     }

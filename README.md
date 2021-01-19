@@ -1,18 +1,20 @@
 # kafka-connect-mqtt
 
 **Source Only**
-This source is not creating new topics for MQTT topics, but sents all the data into a single topic.
-Data is wrapped into a JSON envelope:
+This source is not creating new topics for MQTT topics, but sends all the data into a single topic.
+Data is sent as a schema:
 
 ```kotlin
-data class MqttMessage(
-    val topic: String,
-    val id: Int,
-    val retained: Boolean,
-    val duplicate: Boolean,
-    val qos: Int,
-    val payload: String
-)
+SchemaBuilder.struct()
+    .name(MqttMessage::class.java.simpleName)
+    .field(TOPIC, Schema.STRING_SCHEMA)
+    .field(DATE_TIME, Timestamp.SCHEMA)
+    .field(ID_PROPERTY, Schema.INT32_SCHEMA)
+    .field(RETAINED, Schema.BOOLEAN_SCHEMA)
+    .field(DUPLICATE, Schema.BOOLEAN_SCHEMA)
+    .field(QOS, Schema.INT32_SCHEMA)
+    .field(PAYLOAD, Schema.STRING_SCHEMA)
+    .build()
 ```
 
 Payload is read is String and Base64 encoded.

@@ -1,6 +1,6 @@
 package pro.tipok.kafka.connect.mqtt.utils
 
-import com.beust.klaxon.Klaxon
+import org.apache.kafka.connect.data.Struct
 import org.apache.kafka.connect.source.SourceRecord
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -17,8 +17,6 @@ import org.eclipse.paho.client.mqttv3.MqttMessage as MqttMes
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MessageListenerTests {
-
-    private val k = Klaxon()
 
     @Test
     fun `Test message arrived callback`() {
@@ -40,14 +38,14 @@ class MessageListenerTests {
         val record = queue.take()
 
         Assertions.assertEquals("mqtt", record.topic())
-        val message: MqttMessage? = k.parse(record.value() as String)
+        val struct = record.value() as Struct
 
-        Assertions.assertEquals(false, message?.duplicate)
-        Assertions.assertEquals(true, message?.retained)
-        Assertions.assertEquals(12, message?.id)
-        Assertions.assertEquals(2, message?.qos)
-        Assertions.assertEquals("temp", message?.topic)
-        Assertions.assertEquals("cGF5bG9hZA==", message?.payload)
+        Assertions.assertEquals(false, struct.getBoolean("duplicate"))
+        Assertions.assertEquals(true, struct.getBoolean( "retained"))
+        Assertions.assertEquals(12, struct.getInt32("id"))
+        Assertions.assertEquals(2, struct.getInt32("qos"))
+        Assertions.assertEquals("temp", struct.getString("topic"))
+        Assertions.assertEquals("cGF5bG9hZA==", struct.getString("payload"))
 
         listener.messageArrived("temp", null)
         Assertions.assertEquals(0, queue.size)

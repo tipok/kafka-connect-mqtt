@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicInteger
 import org.eclipse.paho.client.mqttv3.MqttMessage as MqttMes
 
 /**
@@ -21,7 +22,10 @@ class MessageListenerTests {
     @Test
     fun `Test message arrived callback`() {
         val queue = LinkedBlockingQueue<SourceRecord>()
-        val listener = MessageListener("mqtt", queue)
+        val counter = AtomicInteger(0)
+        val listener = MessageListener("mqtt", queue) {
+            counter.incrementAndGet()
+        }
         listener.connectionLost(Exception())
         listener.deliveryComplete(null)
 
@@ -49,5 +53,9 @@ class MessageListenerTests {
 
         listener.messageArrived("temp", null)
         Assertions.assertEquals(0, queue.size)
+
+        listener.connectionLost(Exception())
+        listener.connectionLost(Exception())
+        Assertions.assertEquals(3, counter.get())
     }
 }

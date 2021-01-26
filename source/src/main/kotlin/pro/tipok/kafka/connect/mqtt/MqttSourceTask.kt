@@ -6,9 +6,11 @@ import org.apache.kafka.connect.source.SourceRecord
 import org.apache.kafka.connect.source.SourceTask
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.slf4j.Logger
 import pro.tipok.kafka.connect.mqtt.utils.Configuration
 import pro.tipok.kafka.connect.mqtt.utils.MessageListener
 import pro.tipok.kafka.connect.mqtt.utils.SourceRecordQueue
+import pro.tipok.kafka.connect.mqtt.utils.Utils.logger
 import pro.tipok.kafka.connect.mqtt.utils.Version
 
 
@@ -22,6 +24,10 @@ import pro.tipok.kafka.connect.mqtt.utils.Version
 class MqttSourceTask(
     private val mqttClientSupplier: (String, String) -> MqttClient = { uri, clientId -> MqttClient(uri, clientId) }
 ) : SourceTask() {
+
+    companion object {
+        private val logger: Logger = logger()
+    }
 
     private var kafkaTopic: String = "mqtt"
     private var timeout: Int = 30
@@ -78,19 +84,34 @@ class MqttSourceTask(
             val clientId = MqttClient.generateClientId()
             val client = mqttClientSupplier(uri, clientId)
             clients[clientId] = client
-            client.connect(connOpts)
-            client.setCallback(MessageListener(this.kafkaTopic, this.queue))
-            this.topics.forEach { topic ->
-                client.subscribe(topic, this.qos)
-            }
+            connectClient(client, connOpts)
+        }
+    }
+
+    private fun connectClient(client: MqttClient, connOpts: MqttConnectOptions) {
+        client.connect(connOpts)
+        client.setCallback(MessageListener(this.kafkaTopic, this.queue) {
+            stopClient(client)
+            connectClient(client, connOpts)
+        })
+        this.topics.forEach { topic ->
+            client.subscribe(topic, this.qos)
+        }
+    }
+
+    private fun stopClient(client: MqttClient) {
+        try {
+            this.topics.forEach { topic -> client.unsubscribe(topic) }
+            client.disconnectForcibly(this.timeout.toLong() * 1000)
+        } catch (e: Exception) {
+            logger.info("Error during client stopping:", e)
         }
     }
 
     override fun stop() {
         this.queue.clear()
         this.clients.forEach { (_, client) ->
-            this.topics.forEach { topic -> client.unsubscribe(topic) }
-            client.disconnectForcibly(this.timeout.toLong() * 1000)
+            stopClient(client)
         }
     }
 

@@ -20,7 +20,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage as MqttMes
  */
 class MessageListener(
     private val kafkaTopic: String,
-    private val queue: SourceRecordQueue
+    private val queue: SourceRecordQueue,
+    private val disconnectCallback: () -> Unit
 ): MqttCallback {
     companion object {
         private val logger: Logger = logger()
@@ -31,6 +32,7 @@ class MessageListener(
 
     override fun connectionLost(cause: Throwable?) {
         logger.info("Connection lost:", cause)
+        disconnectCallback()
     }
 
     override fun messageArrived(topic: String?, message: MqttMes?) {
